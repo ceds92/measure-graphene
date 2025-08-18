@@ -17,12 +17,12 @@ except:
     from pymeasure.instruments.keithley import Keithley2400
 
 IP   = '130.194.165.179'
-NTCP = nanonisTCP(IP,6501)
+NTCP = nanonisTCP(IP,6503)
 
 kth = Keithley2400("GPIB::1")
 
 # %%
-run_name = "Grene-hBN-Grite STM 77K straight from ambient -1 V to 1 V"
+run_name = "Grene-hBN-Grite STM 77K 670K 50min -1 V to 1 V post dep"
 Vb  = 50e-3     # Bias across the resistor + flake (V)
 Vgi = -1.0      # Initial gate voltage (V) 
 Vgf = 1.0       # Final gate voltage (V)
@@ -44,7 +44,7 @@ lockin  = LockIn(NTCP)
 
 compliance_current = 100e-6
 kth.apply_voltage(voltage_range=5,compliance_current=compliance_current)
-kth.ramp_to_voltage(0,10*abs(int(kth.source_voltage/dVg)),dt/10)
+kth.ramp_to_voltage(0,10*abs(int(kth.source_voltage/dVg)),dt/2)
 # kth.enable_source()
 
 dmodX_idx = 86
@@ -56,17 +56,17 @@ if(useLockin):
 
 # %%
 # Step 1: ramp gate voltage to initial bias, Vgi
-kth.ramp_to_voltage(Vgi,10*int(abs(Vgi/dVg)),dt)
+kth.ramp_to_voltage(Vgi,10*int(abs(Vgi/dVg)),dt/2)
 
 # %%
 # Step 2: Sweep the gate voltage while measuring the flake resistance
-N  = int((Vgf - Vgi)/dVg)
+N  = int((Vgf - Vgi)/dVg) + 1
 vg = np.linspace(Vgi,Vgf,N)
 Rg = np.zeros_like(vg)
 dmx = np.zeros_like(vg)
 dmy = np.zeros_like(vg)
 for n,Vg in enumerate(vg):
-    kth.ramp_to_voltage(Vg,10,dt)
+    kth.ramp_to_voltage(Vg,10,dt/2)
 
     time.sleep(ts)
 
@@ -82,7 +82,7 @@ for n,Vg in enumerate(vg):
         dmx[n] = signals.ValGet(dmodX_idx)
         dmy[n] = signals.ValGet(dmodY_idx)
     
-kth.ramp_to_voltage(0,10*int(abs(Vgf/dVg)),dt)
+kth.ramp_to_voltage(0,10*int(abs(Vgf/dVg)),dt/2)
 
 # kth.disable_source()
 NTCP.close_connection()
